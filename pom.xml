@@ -20,6 +20,14 @@
         <version>2.7.0</version>
     </parent>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/open-timetrack/backend-spring-boot</url>
+        </repository>
+    </distributionManagement>
+
     <repositories>
         <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
 
@@ -43,6 +51,14 @@
             <url>https://maven.vaadin.com/vaadin-addons</url>
             <snapshots>
                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>github-open-timetrack-api</id>
+            <url>https://maven.pkg.github.com/open-timetrack/api</url>
+            <snapshots>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
