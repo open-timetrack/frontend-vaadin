@@ -18,5 +18,3 @@ tsconfig.json
 types.d.ts
 vite.config.ts
 vite.generated.ts
-package-lock.json
-package.json
