@@ -40,7 +40,7 @@ jobs:
           distribution: 'corretto'
           cache: maven
 
-      - uses: s4u/maven-settings-action@v2.6.0
+      - uses: s4u/maven-settings-action@v2.8.0
         name: Set up maven settings
         with:
           servers: |
