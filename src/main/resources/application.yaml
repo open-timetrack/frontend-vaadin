@@ -1,0 +1,22 @@
+server:
+  port: 9000
+
+logging:
+  level:
+    org.atmosphere: warn
+
+spring:
+  mustache:
+    check-template-location: false
+
+vaadin:
+  launch-browser: true
+  # To improve the performance during development.
+  # For more information https://vaadin.com/docs/flow/spring/tutorial-spring-configuration.html#special-configuration-parameters
+  #  whitelisted-packages: com.vaadin,org.vaadin,open.timetrack.frontend
+  pnpm:
+    enable: true
+
+tta:
+  ui:
+    backendUrl: http://localhost:8080/
