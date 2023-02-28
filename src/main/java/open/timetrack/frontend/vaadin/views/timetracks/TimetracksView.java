@@ -41,7 +41,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private final Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
 
     private DateTimePicker start;
-    private DateTimePicker end;
+    private DateTimePicker ende;
     private TextField task;
     private TextField note;
 
@@ -122,7 +122,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        Optional<Long> timeTrackId = event.getRouteParameters().get(TIMETRACK_ID).map(Long::parseLong);
+        Optional<String> timeTrackId = event.getRouteParameters().get(TIMETRACK_ID);
         if (timeTrackId.isPresent()) {
             Optional<TimeTrack> timeTrackFromBackend = timeTrackService.get(timeTrackId.get());
             if (timeTrackFromBackend.isPresent()) {
@@ -149,11 +149,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         FormLayout formLayout = new FormLayout();
         start = new DateTimePicker("Start");
         start.setStep(Duration.ofSeconds(1));
-        end = new DateTimePicker("End");
-        end.setStep(Duration.ofSeconds(1));
+        ende = new DateTimePicker("Ende");
+        ende.setStep(Duration.ofSeconds(1));
         task = new TextField("Task");
         note = new TextField("Note");
-        formLayout.add(start, end, task, note);
+        formLayout.add(start, ende, task, note);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);

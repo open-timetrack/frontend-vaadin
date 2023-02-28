@@ -16,7 +16,7 @@ public class TimeTrackService {
         this.repository = repository;
     }
 
-    public Optional<TimeTrack> get(Long id) {
+    public Optional<TimeTrack> get(String id) {
         return repository.findById(id);
     }
 
@@ -24,7 +24,7 @@ public class TimeTrackService {
         return repository.save(entity);
     }
 
-    public void delete(Long id) {
+    public void delete(String id) {
         repository.deleteById(id);
     }
 
