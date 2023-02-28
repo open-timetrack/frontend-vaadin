@@ -1,0 +1,53 @@
+{
+    "branches": "main",
+    "plugins" : [
+        "@semantic-release/commit-analyzer",
+        "@semantic-release/release-notes-generator",
+        [
+            "@semantic-release/github",
+            {
+                "assets": [
+                    {
+                        "path" : ".cr-release-packages/*.tgz",
+                        "label": "helm chart"
+                    }
+                ]
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "verifyReleaseCmd": "mvn -B versions:set -DnewVersion=${nextRelease.version}",
+                "prepareCmd"      : "mvn -B package -Pproduction",
+                "successCmd"      : "mvn -B versions:set -DnextSnapshot=true"
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "prepareCmd": "docker build -t $REGISTRY/$IMAGE_NAME:${nextRelease.version} .",
+                "publishCmd": "docker push $REGISTRY/$IMAGE_NAME:${nextRelease.version}"
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "verifyReleaseCmd": "sed -i -e 's/version: .*/version: ${nextRelease.version}/' -e 's/appVersion: .*/appVersion: \"${nextRelease.version}\"/' charts/Chart.yaml",
+                "prepareCmd"      : "cr package charts",
+                "publishCmd"      : "cr index --push --release-name-template '${nextRelease.gitTag}'",
+                "successCmd"      : "mvn -q --non-recursive exec:exec | xargs -I {} sed -i -e 's/version: .*/version: {}/' -e 's/appVersion: .*/appVersion: \"{}\"/' charts/Chart.yaml"
+            }
+        ],
+        [
+            "@semantic-release/git",
+            {
+                "assets": [
+                    "package.json",
+                    "package-lock.json",
+                    "charts/Chart.yaml",
+                    "pom.xml"
+                ]
+            }
+        ]
+    ]
+}
