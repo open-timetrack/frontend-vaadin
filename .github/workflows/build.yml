@@ -30,13 +30,6 @@ jobs:
 
       - uses: s4u/maven-settings-action@v2.6.0
         name: Set up maven settings
-        with:
-          servers: |
-            [{
-                "id": "github-open-timetrack-api",
-                "username": "${{ secrets.CICD_USERNAME }}",
-                "password": "${{ secrets.CICD_PAT }}"
-            }]
 
       - name: Build with Maven
         run: mvn -B package -Pproduction --file pom.xml
