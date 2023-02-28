@@ -1,3 +1,4 @@
+.idea/
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -9,3 +10,13 @@ buildNumber.properties
 .mvn/timing.properties
 # https://github.com/takari/maven-wrapper#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
+frontend/generated/
+node_modules/
+src/main/dev-bundle/
+frontend/index.html
+tsconfig.json
+types.d.ts
+vite.config.ts
+vite.generated.ts
+package-lock.json
+package.json
