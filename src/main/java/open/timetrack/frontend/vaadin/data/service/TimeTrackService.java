@@ -1,11 +1,13 @@
 package open.timetrack.frontend.vaadin.data.service;
 
-import java.util.Optional;
 import open.timetrack.frontend.vaadin.data.entity.TimeTrack;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class TimeTrackService {
@@ -40,4 +42,9 @@ public class TimeTrackService {
         return (int) repository.count();
     }
 
+    public Page<TimeTrack> list(LocalDate shownDate, Pageable pageable) {
+        return repository.findAllAtDate(shownDate.atTime(0, 0, 0),
+                shownDate.plusDays(1).atTime(0, 0, 0),
+                pageable);
+    }
 }

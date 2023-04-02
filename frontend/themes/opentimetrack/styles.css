@@ -4,3 +4,7 @@
     [theme~="dark"] {
 
     }
+
+vaadin-grid::part(work-in-progress) {
+    background-color: var(--lumo-error-color-10pct);
+}

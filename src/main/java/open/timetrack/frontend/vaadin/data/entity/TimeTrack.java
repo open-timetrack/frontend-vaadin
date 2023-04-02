@@ -1,7 +1,10 @@
 package open.timetrack.frontend.vaadin.data.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
+
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 public class TimeTrack extends AbstractEntity {
@@ -36,4 +39,8 @@ public class TimeTrack extends AbstractEntity {
         this.note = note;
     }
 
+    @Transient
+    public Long getHoursTaken() {
+        return (start != null && ende != null) ? ChronoUnit.HOURS.between(start, ende) : null;
+    }
 }
