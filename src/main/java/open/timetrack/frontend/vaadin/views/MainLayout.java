@@ -44,6 +44,7 @@ public class MainLayout extends AppLayout {
 
         Scroller scroller = new Scroller(createNavigation());
 
+        this.setDrawerOpened(false);
         addToDrawer(header, scroller, createFooter());
     }
 

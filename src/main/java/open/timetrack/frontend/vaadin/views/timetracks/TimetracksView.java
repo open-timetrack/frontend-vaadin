@@ -15,7 +15,9 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
@@ -30,7 +32,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Optional;
 
@@ -45,10 +46,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private final Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
     private LocalDate shownDate;
 
-    private DateTimePicker start;
-    private DateTimePicker ende;
+    private DatePicker date;
+    private TimePicker startTime;
+    private TimePicker endTime;
     private TextField task;
-    private TextField note;
+    private TextArea note;
 
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
@@ -102,8 +104,9 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("start").setAutoWidth(true);
-        grid.addColumn("ende").setAutoWidth(true);
+        grid.addColumn("date").setAutoWidth(true);
+        grid.addColumn("startTime").setAutoWidth(true);
+        grid.addColumn("endTime").setAutoWidth(true);
         grid.addColumn("hoursTaken").setAutoWidth(true).setHeader("#");
         grid.addColumn("task").setAutoWidth(true);
         grid.addColumn("note").setAutoWidth(true);
@@ -112,7 +115,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
         grid.setPartNameGenerator(person -> {
-            if (person.getEnde() == null) return "work-in-progress";
+            if (person.getEndTime() == null) return "work-in-progress";
             return null;
         });
 
@@ -167,7 +170,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                     return;
                 }
                 binder.writeBean(this.timeTrack);
-                timeTrack.setEnde(LocalDateTime.now().withNano(0));
+                timeTrack.setEndTime(LocalTime.now().withSecond(0).withNano(0));
                 timeTrackService.update(this.timeTrack);
                 clearForm();
                 refreshGrid();
@@ -236,14 +239,24 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        start = new DateTimePicker("Start");
-        start.setStep(Duration.ofSeconds(1));
-        start.setValue(shownDate.atTime(LocalTime.now()));
-        ende = new DateTimePicker("Ende");
-        ende.setStep(Duration.ofSeconds(1));
+        date = new DatePicker("Date");
+        date.setValue(shownDate);
+        startTime = new TimePicker("Start of that task");
+        int minuteSteps = 15;
+        startTime.setStep(Duration.ofMinutes(minuteSteps));
+        startTime.setMin(LocalTime.of(8,0));
+        startTime.setMax(LocalTime.of(18,0));
+
+        LocalTime now = LocalTime.now();
+        startTime.setValue(now.minusMinutes(now.getMinute() % minuteSteps));
+        endTime = new TimePicker("End of that task");
+        endTime.setStep(Duration.ofMinutes(minuteSteps));
+        endTime.setMin(LocalTime.of(8,0));
+        endTime.setMax(LocalTime.of(18,0));
         task = new TextField("Task");
-        note = new TextField("Note");
-        formLayout.add(start, ende, task, note);
+        note = new TextArea("Note");
+
+        formLayout.add(date,startTime, endTime, task, note);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);

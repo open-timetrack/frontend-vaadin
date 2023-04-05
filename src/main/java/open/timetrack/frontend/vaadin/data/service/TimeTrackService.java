@@ -43,8 +43,6 @@ public class TimeTrackService {
     }
 
     public Page<TimeTrack> list(LocalDate shownDate, Pageable pageable) {
-        return repository.findAllAtDate(shownDate.atTime(0, 0, 0),
-                shownDate.plusDays(1).atTime(0, 0, 0),
-                pageable);
+        return repository.findAllByDateOrderByStartTime(shownDate, pageable);
     }
 }
