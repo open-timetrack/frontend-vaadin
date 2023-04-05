@@ -3,6 +3,7 @@ package open.timetrack.frontend.vaadin.views.timetracks;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -11,24 +12,28 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.router.*;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import java.time.Duration;
-import java.util.Optional;
 import open.timetrack.frontend.vaadin.data.entity.TimeTrack;
 import open.timetrack.frontend.vaadin.data.service.TimeTrackService;
 import open.timetrack.frontend.vaadin.views.MainLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
 
 @PageTitle("Timetracks")
 @Route(value = "timetracks/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
@@ -39,14 +44,18 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timetracks/%s/edit";
 
     private final Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
+    private LocalDate shownDate;
 
-    private DateTimePicker start;
-    private DateTimePicker ende;
+    private DatePicker date;
+    private TimePicker startTime;
+    private TimePicker endTime;
     private TextField task;
-    private TextField note;
+    private TextArea note;
 
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
+    private final Button delete = new Button("Delete");
+    private final Button endNow = new Button("End now");
 
     private final BeanValidationBinder<TimeTrack> binder;
 
@@ -54,7 +63,10 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
 
     private final TimeTrackService timeTrackService;
 
+    private static final Logger LOG = LoggerFactory.getLogger(TimetracksView.class);
+
     public TimetracksView(TimeTrackService timeTrackService) {
+        shownDate = LocalDate.now();
         this.timeTrackService = timeTrackService;
         addClassNames("timetracks-view");
 
@@ -64,17 +76,48 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         createGridLayout(splitLayout);
         createEditorLayout(splitLayout);
 
+        DatePicker datePicker = new DatePicker(shownDate);
+        datePicker.addValueChangeListener(event -> {
+            shownDate = event.getValue();
+            displayDate(datePicker);
+            refreshGrid();
+        });
+        displayDate(datePicker);
+        Button backOneDay = new Button("<");
+        backOneDay.addClickListener(buttonClickEvent -> {
+            shownDate = shownDate.minusDays(1);
+            displayDate(datePicker);
+            refreshGrid();
+        });
+        Button forwardOneDay = new Button(">");
+        forwardOneDay.addClickListener(buttonClickEvent -> {
+            shownDate = shownDate.plusDays(1);
+            displayDate(datePicker);
+            refreshGrid();
+        });
+        HorizontalLayout horizontalLayout = new HorizontalLayout(backOneDay, datePicker, forwardOneDay);
+        horizontalLayout.setPadding(true);
+        horizontalLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        add(horizontalLayout);
+
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("start").setAutoWidth(true);
-        grid.addColumn("ende").setAutoWidth(true);
+        grid.addColumn("date").setAutoWidth(true);
+        grid.addColumn("startTime").setAutoWidth(true);
+        grid.addColumn("endTime").setAutoWidth(true);
+        grid.addColumn("hoursTaken").setAutoWidth(true).setHeader("#");
         grid.addColumn("task").setAutoWidth(true);
         grid.addColumn("note").setAutoWidth(true);
-        grid.setItems(query -> timeTrackService.list(
-                PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
-                .stream());
+        grid.setSortableColumns();
+        grid.setItems(query -> timeTrackService.list(shownDate, PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query))).stream());
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+
+        grid.setPartNameGenerator(person -> {
+            if (person.getEndTime() == null) return "work-in-progress";
+            return null;
+        });
 
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
@@ -110,14 +153,63 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 Notification.show("Data updated");
                 UI.getCurrent().navigate(TimetracksView.class);
             } catch (ObjectOptimisticLockingFailureException exception) {
-                Notification n = Notification.show(
-                        "Error updating the data. Somebody else has updated the record while you were making changes.");
+                Notification n = Notification.show("Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
             } catch (ValidationException validationException) {
                 Notification.show("Failed to update the data. Check again that all values are valid");
             }
         });
+
+        endNow.addClickListener(event -> {
+            try {
+                if (this.timeTrack == null) {
+                    Notification n = Notification.show("cannot end new tasks");
+                    n.setPosition(Position.MIDDLE);
+                    n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+                binder.writeBean(this.timeTrack);
+                timeTrack.setEndTime(LocalTime.now().withSecond(0).withNano(0));
+                timeTrackService.update(this.timeTrack);
+                clearForm();
+                refreshGrid();
+                Notification.show("Data updated");
+                UI.getCurrent().navigate(TimetracksView.class);
+            } catch (ObjectOptimisticLockingFailureException exception) {
+                Notification n = Notification.show("Error updating the data. Somebody else has updated the record while you were making changes.");
+                n.setPosition(Position.MIDDLE);
+                n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            } catch (ValidationException validationException) {
+                Notification.show("Failed to update the data. Check again that all values are valid");
+            }
+        });
+        delete.addClickListener(event -> {
+            try {
+                if (this.timeTrack == null) {
+                    Notification n = Notification.show("cannot delete new tasks");
+                    n.setPosition(Position.MIDDLE);
+                    n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+                binder.writeBean(this.timeTrack);
+                timeTrackService.delete(this.timeTrack.getId());
+                clearForm();
+                refreshGrid();
+                Notification.show("Data deleted");
+                UI.getCurrent().navigate(TimetracksView.class);
+            } catch (ObjectOptimisticLockingFailureException exception) {
+                Notification n = Notification.show("Error updating the data. Somebody else has updated the record while you were making changes.");
+                n.setPosition(Position.MIDDLE);
+                n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            } catch (ValidationException validationException) {
+                Notification.show("Failed to update the data. Check again that all values are valid");
+            }
+        });
+    }
+
+    private void displayDate(DatePicker datePicker) {
+        datePicker.setValue(this.shownDate);
     }
 
     @Override
@@ -147,13 +239,24 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        start = new DateTimePicker("Start");
-        start.setStep(Duration.ofSeconds(1));
-        ende = new DateTimePicker("Ende");
-        ende.setStep(Duration.ofSeconds(1));
+        date = new DatePicker("Date");
+        date.setValue(shownDate);
+        startTime = new TimePicker("Start of that task");
+        int minuteSteps = 15;
+        startTime.setStep(Duration.ofMinutes(minuteSteps));
+        startTime.setMin(LocalTime.of(8,0));
+        startTime.setMax(LocalTime.of(18,0));
+
+        LocalTime now = LocalTime.now();
+        startTime.setValue(now.minusMinutes(now.getMinute() % minuteSteps));
+        endTime = new TimePicker("End of that task");
+        endTime.setStep(Duration.ofMinutes(minuteSteps));
+        endTime.setMin(LocalTime.of(8,0));
+        endTime.setMax(LocalTime.of(18,0));
         task = new TextField("Task");
-        note = new TextField("Note");
-        formLayout.add(start, ende, task, note);
+        note = new TextArea("Note");
+
+        formLayout.add(date,startTime, endTime, task, note);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);
@@ -166,7 +269,9 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         buttonLayout.setClassName("button-layout");
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        buttonLayout.add(save, cancel);
+        endNow.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        buttonLayout.add(save, cancel,endNow,delete);
         editorLayoutDiv.add(buttonLayout);
     }
 
@@ -189,6 +294,5 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private void populateForm(TimeTrack value) {
         this.timeTrack = value;
         binder.readBean(this.timeTrack);
-
     }
 }
