@@ -4,11 +4,11 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
-import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -44,6 +44,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timetracks/%s/edit";
 
     private final Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
+    private final Span hoursWorkedText;
     private LocalDate shownDate;
 
     private DatePicker date;
@@ -79,21 +80,19 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         DatePicker datePicker = new DatePicker(shownDate);
         datePicker.addValueChangeListener(event -> {
             shownDate = event.getValue();
-            displayDate(datePicker);
             refreshGrid();
         });
-        displayDate(datePicker);
+        datePicker.addValueChangeListener(event -> date.setValue(event.getValue()));
+
         Button backOneDay = new Button("<");
         backOneDay.addClickListener(buttonClickEvent -> {
             shownDate = shownDate.minusDays(1);
-            displayDate(datePicker);
-            refreshGrid();
+            datePicker.setValue(shownDate);
         });
         Button forwardOneDay = new Button(">");
         forwardOneDay.addClickListener(buttonClickEvent -> {
             shownDate = shownDate.plusDays(1);
-            displayDate(datePicker);
-            refreshGrid();
+            datePicker.setValue(shownDate);
         });
         HorizontalLayout horizontalLayout = new HorizontalLayout(backOneDay, datePicker, forwardOneDay);
         horizontalLayout.setPadding(true);
@@ -104,10 +103,10 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("date").setAutoWidth(true);
-        grid.addColumn("startTime").setAutoWidth(true);
-        grid.addColumn("endTime").setAutoWidth(true);
-        grid.addColumn("hoursTaken").setAutoWidth(true).setHeader("#");
+        grid.addColumn("date").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn("startTime").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn("endTime").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn("hoursTaken").setAutoWidth(true).setFlexGrow(0).setHeader("#");
         grid.addColumn("task").setAutoWidth(true);
         grid.addColumn("note").setAutoWidth(true);
         grid.setSortableColumns();
@@ -137,6 +136,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
+            UI.getCurrent().navigate(TimetracksView.class);
             clearForm();
             refreshGrid();
         });
@@ -184,6 +184,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 Notification.show("Failed to update the data. Check again that all values are valid");
             }
         });
+
         delete.addClickListener(event -> {
             try {
                 if (this.timeTrack == null) {
@@ -206,10 +207,15 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 Notification.show("Failed to update the data. Check again that all values are valid");
             }
         });
-    }
 
-    private void displayDate(DatePicker datePicker) {
-        datePicker.setValue(this.shownDate);
+
+        hoursWorkedText = new Span();
+        add(new HorizontalLayout(new Span("Hours worked this day: "), hoursWorkedText));
+
+        hoursWorkedText.setText(String.valueOf(timeTrackService.getSumHoursWorked(shownDate)));
+        datePicker.addValueChangeListener(event -> hoursWorkedText.setText(String.valueOf(timeTrackService.getSumHoursWorked(shownDate))));
+
+        datePicker.setValue(LocalDate.now());
     }
 
     @Override
@@ -240,23 +246,24 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
 
         FormLayout formLayout = new FormLayout();
         date = new DatePicker("Date");
-        date.setValue(shownDate);
         startTime = new TimePicker("Start of that task");
         int minuteSteps = 15;
         startTime.setStep(Duration.ofMinutes(minuteSteps));
-        startTime.setMin(LocalTime.of(8,0));
-        startTime.setMax(LocalTime.of(18,0));
+        startTime.setMin(LocalTime.of(8, 0));
+        startTime.setMax(LocalTime.of(18, 0));
 
         LocalTime now = LocalTime.now();
-        startTime.setValue(now.minusMinutes(now.getMinute() % minuteSteps));
+        startTime.setValue(now.withNano(0)
+                .withSecond(0)
+                .minusMinutes(now.getMinute() % minuteSteps));
         endTime = new TimePicker("End of that task");
         endTime.setStep(Duration.ofMinutes(minuteSteps));
-        endTime.setMin(LocalTime.of(8,0));
-        endTime.setMax(LocalTime.of(18,0));
+        endTime.setMin(LocalTime.of(8, 0));
+        endTime.setMax(LocalTime.of(18, 0));
         task = new TextField("Task");
         note = new TextArea("Note");
 
-        formLayout.add(date,startTime, endTime, task, note);
+        formLayout.add(date, startTime, endTime, task, note);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);
@@ -285,6 +292,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private void refreshGrid() {
         grid.select(null);
         grid.getDataProvider().refreshAll();
+        hoursWorkedText.setText(String.valueOf(timeTrackService.getSumHoursWorked(shownDate)));
     }
 
     private void clearForm() {
@@ -294,5 +302,6 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private void populateForm(TimeTrack value) {
         this.timeTrack = value;
         binder.readBean(this.timeTrack);
+        date.setValue(shownDate);
     }
 }

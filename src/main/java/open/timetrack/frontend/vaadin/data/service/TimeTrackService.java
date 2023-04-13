@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -44,5 +45,13 @@ public class TimeTrackService {
 
     public Page<TimeTrack> list(LocalDate shownDate, Pageable pageable) {
         return repository.findAllByDateOrderByStartTime(shownDate, pageable);
+    }
+    public Float getSumHoursWorked(LocalDate shownDate){
+        return (float) repository.findAllByDateOrderByStartTime(shownDate, Pageable.unpaged())
+                .stream()
+                .map(TimeTrack::getHoursTaken)
+                .filter(Objects::nonNull)
+                .mapToDouble(value -> value)
+                .sum();
     }
 }
