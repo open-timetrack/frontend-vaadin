@@ -21,6 +21,7 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import open.timetrack.frontend.vaadin.data.entity.TimeTrack;
 import open.timetrack.frontend.vaadin.data.service.TimeTrackService;
@@ -33,6 +34,8 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.Locale;
 import java.util.Optional;
 
 @PageTitle("Timetracks")
@@ -78,6 +81,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         createEditorLayout(splitLayout);
 
         DatePicker datePicker = new DatePicker(shownDate);
+        datePicker.setLocale(VaadinService.getCurrentRequest().getLocale());
         datePicker.addValueChangeListener(event -> {
             shownDate = event.getValue();
             refreshGrid();
@@ -250,15 +254,18 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         startTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
         startTime.setMin(LocalTime.of(8, 0));
         startTime.setMax(LocalTime.of(19, 0));
-
-        final LocalTime now = LocalTime.now();
-        startTime.setValue(now.withNano(0)
-                .withSecond(0)
-                .minusMinutes(now.getMinute() % MINUTE_STEPS));
+        startTime.setLocale(VaadinService.getCurrentRequest().getLocale());
+        UI.getCurrent().getPage().retrieveExtendedClientDetails(extendedClientDetails -> {
+            final LocalTime now = LocalTime.now(ZoneId.of(extendedClientDetails.getTimeZoneId()));
+            startTime.setValue(now.withNano(0)
+                    .withSecond(0)
+                    .minusMinutes(now.getMinute() % MINUTE_STEPS));
+        });
         endTime = new TimePicker("End of that task");
         endTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
         endTime.setMin(LocalTime.of(8, 0));
         endTime.setMax(LocalTime.of(19, 0));
+        endTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         task = new TextField("Task");
         note = new TextArea("Note");
 
@@ -296,10 +303,12 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
 
     private void clearForm() {
         populateForm(null);
-        final LocalTime now = LocalTime.now();
-        startTime.setValue(now.withNano(0)
-                .withSecond(0)
-                .minusMinutes(now.getMinute() % MINUTE_STEPS));
+        UI.getCurrent().getPage().retrieveExtendedClientDetails(extendedClientDetails -> {
+            final LocalTime now = LocalTime.now(ZoneId.of(extendedClientDetails.getTimeZoneId()));
+            startTime.setValue(now.withNano(0)
+                    .withSecond(0)
+                    .minusMinutes(now.getMinute() % MINUTE_STEPS));
+        });
     }
 
     private void populateForm(TimeTrack value) {
