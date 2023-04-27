@@ -52,6 +52,7 @@ public class TimeTrackService {
                 .map(TimeTrack::getHoursTaken)
                 .filter(Objects::nonNull)
                 .mapToDouble(value -> value)
+                .map(operand -> Math.round(operand * 10) / 10d)
                 .sum();
     }
 }

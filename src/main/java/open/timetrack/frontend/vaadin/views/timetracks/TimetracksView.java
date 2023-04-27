@@ -40,6 +40,7 @@ import java.util.Optional;
 @RouteAlias(value = "", layout = MainLayout.class)
 public class TimetracksView extends Div implements BeforeEnterObserver {
 
+    public static final int MINUTE_STEPS = 15;
     private final String TIMETRACK_ID = "timeTrackID";
     private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timetracks/%s/edit";
 
@@ -47,7 +48,6 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private final Span hoursWorkedText;
     private LocalDate shownDate;
 
-    private DatePicker date;
     private TimePicker startTime;
     private TimePicker endTime;
     private TextField task;
@@ -82,17 +82,18 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
             shownDate = event.getValue();
             refreshGrid();
         });
-        datePicker.addValueChangeListener(event -> date.setValue(event.getValue()));
 
         Button backOneDay = new Button("<");
         backOneDay.addClickListener(buttonClickEvent -> {
             shownDate = shownDate.minusDays(1);
             datePicker.setValue(shownDate);
+            clearForm();
         });
         Button forwardOneDay = new Button(">");
         forwardOneDay.addClickListener(buttonClickEvent -> {
             shownDate = shownDate.plusDays(1);
             datePicker.setValue(shownDate);
+            clearForm();
         });
         HorizontalLayout horizontalLayout = new HorizontalLayout(backOneDay, datePicker, forwardOneDay);
         horizontalLayout.setPadding(true);
@@ -103,10 +104,9 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("date").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn("startTime").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn("endTime").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn("hoursTaken").setAutoWidth(true).setFlexGrow(0).setHeader("#");
+        grid.addColumn("hoursTaken").setWidth("55px").setFlexGrow(0).setHeader("#");
         grid.addColumn("task").setAutoWidth(true);
         grid.addColumn("note").setAutoWidth(true);
         grid.setSortableColumns();
@@ -146,6 +146,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 if (this.timeTrack == null) {
                     this.timeTrack = new TimeTrack();
                 }
+                timeTrack.setDate(shownDate);
                 binder.writeBean(this.timeTrack);
                 timeTrackService.update(this.timeTrack);
                 clearForm();
@@ -245,25 +246,23 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        date = new DatePicker("Date");
         startTime = new TimePicker("Start of that task");
-        int minuteSteps = 15;
-        startTime.setStep(Duration.ofMinutes(minuteSteps));
+        startTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
         startTime.setMin(LocalTime.of(8, 0));
-        startTime.setMax(LocalTime.of(18, 0));
+        startTime.setMax(LocalTime.of(19, 0));
 
-        LocalTime now = LocalTime.now();
+        final LocalTime now = LocalTime.now();
         startTime.setValue(now.withNano(0)
                 .withSecond(0)
-                .minusMinutes(now.getMinute() % minuteSteps));
+                .minusMinutes(now.getMinute() % MINUTE_STEPS));
         endTime = new TimePicker("End of that task");
-        endTime.setStep(Duration.ofMinutes(minuteSteps));
+        endTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
         endTime.setMin(LocalTime.of(8, 0));
-        endTime.setMax(LocalTime.of(18, 0));
+        endTime.setMax(LocalTime.of(19, 0));
         task = new TextField("Task");
         note = new TextArea("Note");
 
-        formLayout.add(date, startTime, endTime, task, note);
+        formLayout.add(startTime, endTime, task, note);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);
@@ -297,11 +296,14 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
 
     private void clearForm() {
         populateForm(null);
+        final LocalTime now = LocalTime.now();
+        startTime.setValue(now.withNano(0)
+                .withSecond(0)
+                .minusMinutes(now.getMinute() % MINUTE_STEPS));
     }
 
     private void populateForm(TimeTrack value) {
         this.timeTrack = value;
         binder.readBean(this.timeTrack);
-        date.setValue(shownDate);
     }
 }
