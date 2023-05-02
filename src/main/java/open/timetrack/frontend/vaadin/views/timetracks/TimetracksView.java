@@ -9,6 +9,8 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -35,7 +37,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.Locale;
 import java.util.Optional;
 
 @PageTitle("Timetracks")
@@ -87,13 +88,13 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
             refreshGrid();
         });
 
-        Button backOneDay = new Button("<");
+        Button backOneDay = new Button(new Icon(VaadinIcon.ARROW_LEFT));
         backOneDay.addClickListener(buttonClickEvent -> {
             shownDate = shownDate.minusDays(1);
             datePicker.setValue(shownDate);
             clearForm();
         });
-        Button forwardOneDay = new Button(">");
+        Button forwardOneDay = new Button(new Icon(VaadinIcon.ARROW_RIGHT));
         forwardOneDay.addClickListener(buttonClickEvent -> {
             shownDate = shownDate.plusDays(1);
             datePicker.setValue(shownDate);
@@ -110,15 +111,15 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         // Configure Grid
         grid.addColumn("startTime").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn("endTime").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn("hoursTaken").setWidth("55px").setFlexGrow(0).setHeader("#");
+        grid.addColumn("hoursTaken").setWidth("60px").setFlexGrow(0).setHeader("#");
         grid.addColumn("task").setAutoWidth(true);
         grid.addColumn("note").setAutoWidth(true);
         grid.setSortableColumns();
         grid.setItems(query -> timeTrackService.list(shownDate, PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query))).stream());
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
-        grid.setPartNameGenerator(person -> {
-            if (person.getEndTime() == null) return "work-in-progress";
+        grid.setPartNameGenerator(timeTrack -> {
+            if (timeTrack.getEndTime() == null) return "work-in-progress";
             return null;
         });
 
@@ -253,7 +254,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         startTime = new TimePicker("Start of that task");
         startTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
         startTime.setMin(LocalTime.of(8, 0));
-        startTime.setMax(LocalTime.of(19, 0));
+        startTime.setMax(LocalTime.of(20, 0));
         startTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         UI.getCurrent().getPage().retrieveExtendedClientDetails(extendedClientDetails -> {
             final LocalTime now = LocalTime.now(ZoneId.of(extendedClientDetails.getTimeZoneId()));
@@ -264,7 +265,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         endTime = new TimePicker("End of that task");
         endTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
         endTime.setMin(LocalTime.of(8, 0));
-        endTime.setMax(LocalTime.of(19, 0));
+        endTime.setMax(LocalTime.of(20, 0));
         endTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         task = new TextField("Task");
         note = new TextArea("Note");
