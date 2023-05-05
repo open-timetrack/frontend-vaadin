@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 public class TimeTrackService {
@@ -50,6 +51,13 @@ public class TimeTrackService {
         return (float) repository.findAllByDateOrderByStartTime(shownDate, Pageable.unpaged())
                 .stream()
                 .map(TimeTrack::getHoursTaken)
+                .filter(Objects::nonNull)
+                .mapToDouble(value -> value)
+                .map(operand -> Math.round(operand * 10) / 10d)
+                .sum();
+    }
+    public static Float getSumHoursWorked(Stream<TimeTrack> items){
+        return (float) items.map(TimeTrack::getHoursTaken)
                 .filter(Objects::nonNull)
                 .mapToDouble(value -> value)
                 .map(operand -> Math.round(operand * 10) / 10d)

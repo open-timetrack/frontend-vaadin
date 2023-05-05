@@ -13,6 +13,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import open.timetrack.frontend.vaadin.components.appnav.AppNav;
 import open.timetrack.frontend.vaadin.components.appnav.AppNavItem;
 import open.timetrack.frontend.vaadin.views.timetracks.TimetracksView;
+import open.timetrack.frontend.vaadin.views.timetracks.TimetracksViewV2;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -54,6 +55,7 @@ public class MainLayout extends AppLayout {
         AppNav nav = new AppNav();
 
         nav.addItem(new AppNavItem("Timetracks", TimetracksView.class, "la la-clock"));
+        nav.addItem(new AppNavItem("TimetracksV2", TimetracksViewV2.class, "la la-clock"));
 
         return nav;
     }
