@@ -48,19 +48,13 @@ public class TimeTrackService {
         return repository.findAllByDateOrderByStartTime(shownDate, pageable);
     }
     public Float getSumHoursWorked(LocalDate shownDate){
-        return (float) repository.findAllByDateOrderByStartTime(shownDate, Pageable.unpaged())
-                .stream()
-                .map(TimeTrack::getHoursTaken)
-                .filter(Objects::nonNull)
-                .mapToDouble(value -> value)
-                .map(operand -> Math.round(operand * 10) / 10d)
-                .sum();
+        return getSumHoursWorked(repository.findAllByDateOrderByStartTime(shownDate, Pageable.unpaged()).stream());
     }
     public static Float getSumHoursWorked(Stream<TimeTrack> items){
-        return (float) items.map(TimeTrack::getHoursTaken)
+        double sum = items.map(TimeTrack::getHoursTaken)
                 .filter(Objects::nonNull)
                 .mapToDouble(value -> value)
-                .map(operand -> Math.round(operand * 10) / 10d)
                 .sum();
+        return (float) Math.round(sum * 10f) / 10;
     }
 }

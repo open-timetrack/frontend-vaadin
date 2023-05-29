@@ -1,5 +1,6 @@
 package open.timetrack.frontend.vaadin.views.timetracks;
 
+import com.helger.commons.annotation.VisibleForTesting;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -39,14 +40,14 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
-@PageTitle("Timetracks")
-@Route(value = "timetracks/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
+@PageTitle("TimeTrack")
+@Route(value = "timeTrack/v1/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
-public class TimetracksView extends Div implements BeforeEnterObserver {
+public class TimeTrackViewV1 extends Div implements BeforeEnterObserver, TimeTrackView {
 
     public static final int MINUTE_STEPS = 15;
     private final String TIMETRACK_ID = "timeTrackID";
-    private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timetracks/%s/edit";
+    private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timeTrack/%s/edit";
 
     private final Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
     private final Span hoursWorkedText;
@@ -68,11 +69,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
 
     private final TimeTrackService timeTrackService;
 
-    private static final Logger LOG = LoggerFactory.getLogger(TimetracksView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TimeTrackViewV1.class);
 
-    public TimetracksView(TimeTrackService timeTrackService) {
-        shownDate = LocalDate.now();
+    public TimeTrackViewV1(TimeTrackService timeTrackService) {
         this.timeTrackService = timeTrackService;
+        shownDate = LocalDate.now();
         addClassNames("timetracks-view");
 
         // Create UI
@@ -115,7 +116,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         grid.addColumn("task").setAutoWidth(true);
         grid.addColumn("note").setAutoWidth(true);
         grid.setSortableColumns();
-        grid.setItems(query -> timeTrackService.list(shownDate, PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query))).stream());
+        grid.setItems(query -> this.timeTrackService.list(shownDate, PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query))).stream());
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
         grid.setPartNameGenerator(timeTrack -> {
@@ -129,7 +130,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 UI.getCurrent().navigate(String.format(TIMETRACK_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
             } else {
                 clearForm();
-                UI.getCurrent().navigate(TimetracksView.class);
+                UI.getCurrent().navigate(TimeTrackViewV1.class);
             }
         });
 
@@ -141,7 +142,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
-            UI.getCurrent().navigate(TimetracksView.class);
+            UI.getCurrent().navigate(TimeTrackViewV1.class);
             clearForm();
             refreshGrid();
         });
@@ -153,11 +154,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 }
                 timeTrack.setDate(shownDate);
                 binder.writeBean(this.timeTrack);
-                timeTrackService.update(this.timeTrack);
+                this.timeTrackService.update(this.timeTrack);
                 clearForm();
                 refreshGrid();
                 Notification.show("Data updated");
-                UI.getCurrent().navigate(TimetracksView.class);
+                UI.getCurrent().navigate(TimeTrackViewV1.class);
             } catch (ObjectOptimisticLockingFailureException exception) {
                 Notification n = Notification.show("Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
@@ -177,11 +178,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 }
                 binder.writeBean(this.timeTrack);
                 timeTrack.setEndTime(LocalTime.now().withSecond(0).withNano(0));
-                timeTrackService.update(this.timeTrack);
+                this.timeTrackService.update(this.timeTrack);
                 clearForm();
                 refreshGrid();
                 Notification.show("Data updated");
-                UI.getCurrent().navigate(TimetracksView.class);
+                UI.getCurrent().navigate(TimeTrackViewV1.class);
             } catch (ObjectOptimisticLockingFailureException exception) {
                 Notification n = Notification.show("Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
@@ -200,11 +201,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                     return;
                 }
                 binder.writeBean(this.timeTrack);
-                timeTrackService.delete(this.timeTrack.getId());
+                this.timeTrackService.delete(this.timeTrack.getId());
                 clearForm();
                 refreshGrid();
                 Notification.show("Data deleted");
-                UI.getCurrent().navigate(TimetracksView.class);
+                UI.getCurrent().navigate(TimeTrackViewV1.class);
             } catch (ObjectOptimisticLockingFailureException exception) {
                 Notification n = Notification.show("Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
@@ -218,8 +219,8 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
         hoursWorkedText = new Span();
         add(new HorizontalLayout(new Span("Hours worked this day: "), hoursWorkedText));
 
-        hoursWorkedText.setText(String.valueOf(timeTrackService.getSumHoursWorked(shownDate)));
-        datePicker.addValueChangeListener(event -> hoursWorkedText.setText(String.valueOf(timeTrackService.getSumHoursWorked(shownDate))));
+        hoursWorkedText.setText(String.valueOf(this.timeTrackService.getSumHoursWorked(shownDate)));
+        datePicker.addValueChangeListener(event -> hoursWorkedText.setText(String.valueOf(this.timeTrackService.getSumHoursWorked(shownDate))));
 
         datePicker.setValue(LocalDate.now());
     }
@@ -237,7 +238,7 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
                 // when a row is selected but the data is no longer available,
                 // refresh grid
                 refreshGrid();
-                event.forwardTo(TimetracksView.class);
+                event.forwardTo(TimeTrackViewV1.class);
             }
         }
     }
@@ -315,5 +316,11 @@ public class TimetracksView extends Div implements BeforeEnterObserver {
     private void populateForm(TimeTrack value) {
         this.timeTrack = value;
         binder.readBean(this.timeTrack);
+    }
+
+
+    @VisibleForTesting
+    Grid<TimeTrack> getGrid() {
+        return grid;
     }
 }

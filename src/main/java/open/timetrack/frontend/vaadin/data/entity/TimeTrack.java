@@ -58,6 +58,6 @@ public class TimeTrack extends AbstractEntity {
 
     @Transient
     public Float getHoursTaken() {
-        return getStartTime() != null && getEndTime() != null ? Math.round(getStartTime().until(getEndTime(), ChronoUnit.MINUTES) / 60f * 10) / 10f : null;
+        return getStartTime() != null && getEndTime() != null ? getStartTime().until(getEndTime(), ChronoUnit.MINUTES) / 60f : 0f;
     }
 }

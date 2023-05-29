@@ -1,5 +1,6 @@
 package open.timetrack.frontend.vaadin.components.table;
 
+import com.helger.commons.annotation.VisibleForTesting;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.button.Button;
@@ -25,13 +26,15 @@ import open.timetrack.frontend.vaadin.data.entity.TimeTrack;
 import open.timetrack.frontend.vaadin.data.service.TimeTrackService;
 import org.springframework.data.domain.PageRequest;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Set;
 
 public class TimeTrackTable extends VerticalLayout {
-
+    private static final int MINUTE_STEPS = 15;
     public static final String HOURS_WORKED_TEXT = "Hours worked this day: %.2f";
     private final Span hoursWorkedLabel = new Span();
     private final Grid<TimeTrack> grid;
@@ -65,9 +68,9 @@ public class TimeTrackTable extends VerticalLayout {
 
         grid.addColumn("startTime").setWidth("130px").setFlexGrow(0);
         grid.addColumn("endTime").setWidth("130px").setFlexGrow(0);
-        grid.addColumn("hoursTaken").setWidth("60px").setFlexGrow(0).setHeader("#");
-        grid.addColumn("task").setAutoWidth(true);
-        grid.addColumn("note").setAutoWidth(true);
+        grid.addColumn(timeTrack -> Math.round(timeTrack.getHoursTaken() * 10) / 10f).setWidth("60px").setFlexGrow(0).setHeader("#");
+        grid.addColumn("task").setWidth("400px");
+        grid.addColumn("note").setWidth("400px");
         grid.setSortableColumns();
 
         grid.setItems(query -> service.list(shownDate, PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query))).stream());
@@ -96,9 +99,7 @@ public class TimeTrackTable extends VerticalLayout {
             }
         });
 
-        grid.getDataProvider().addDataProviderListener(event -> {
-            refreshHoursWorkedLabelText();
-        });
+        grid.getDataProvider().addDataProviderListener(event -> refreshHoursWorkedLabelText());
     }
 
     private Editor<TimeTrack> createInGridEditor(Grid<TimeTrack> grid) {
@@ -108,12 +109,18 @@ public class TimeTrackTable extends VerticalLayout {
         editor.setBuffered(true);
 
         TimePicker startTime = new TimePicker();
+        startTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
+        startTime.setMin(LocalTime.of(8, 0));
+        startTime.setMax(LocalTime.of(20, 0));
         startTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         startTime.setWidthFull();
         binder.forField(startTime).bind("startTime");
         grid.getColumnByKey("startTime").setEditorComponent(startTime);
 
         TimePicker endTime = new TimePicker();
+        endTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
+        endTime.setMin(LocalTime.of(8, 0));
+        endTime.setMax(LocalTime.of(20, 0));
         endTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         endTime.setWidthFull();
         binder.forField(endTime).bind("endTime");
@@ -133,6 +140,7 @@ public class TimeTrackTable extends VerticalLayout {
 
     private void createInGridEditorEvents(Editor<TimeTrack> editor, TimeTrackService service) {
         editor.addSaveListener(event -> Optional.ofNullable(event).map(EditorEvent::getItem).ifPresent(service::update));
+        editor.addSaveListener(event -> refreshHoursWorkedLabelText());
     }
 
     private void refreshHoursWorkedLabelText() {
@@ -168,4 +176,8 @@ public class TimeTrackTable extends VerticalLayout {
         grid.getDataProvider().refreshAll();
     }
 
+    @VisibleForTesting
+    public Grid<TimeTrack> getGrid() {
+        return grid;
+    }
 }

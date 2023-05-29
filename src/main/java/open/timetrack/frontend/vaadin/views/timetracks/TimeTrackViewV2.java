@@ -13,14 +13,14 @@ import open.timetrack.frontend.vaadin.views.MainLayout;
 import java.time.LocalDate;
 import java.util.Collection;
 
-@PageTitle("TimetracksV2")
-@Route(value = "timetracks/v2/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
+@PageTitle("TimeTrackV2")
+@Route(value = "timeTrack/v2/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "v2", layout = MainLayout.class)
-public class TimetracksViewV2 extends Scroller implements BeforeEnterObserver {
+public class TimeTrackViewV2 extends Scroller {
     private final TimeTrackService timeTrackService;
     private final VerticalLayout content;
 
-    public TimetracksViewV2(TimeTrackService timeTrackService) {
+    public TimeTrackViewV2(TimeTrackService timeTrackService) {
         this.timeTrackService = timeTrackService;
         this.content = new VerticalLayout();
         content.setHeightFull();
@@ -29,7 +29,7 @@ public class TimetracksViewV2 extends Scroller implements BeforeEnterObserver {
 
         setHeightFull();
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 7; i++)
             addTimeTrackTableForNextDate();
 
         getElement().executeJs("""
@@ -70,9 +70,5 @@ public class TimetracksViewV2 extends Scroller implements BeforeEnterObserver {
                         .forEach(TimeTrackTable::deselectAllInGrid);
         });
         content.add(timeTrackTable);
-    }
-
-    @Override
-    public void beforeEnter(BeforeEnterEvent event) {
     }
 }
