@@ -39,8 +39,14 @@ public class TimeTrackTable extends VerticalLayout {
     private final Span hoursWorkedLabel = new Span();
     private final Grid<TimeTrack> grid;
 
-    public TimeTrackTable(TimeTrackService service, LocalDate shownDate) {
+    private final boolean showCreateButton;
 
+    public TimeTrackTable(TimeTrackService service, LocalDate shownDate) {
+        this(service, shownDate, true);
+    }
+
+    public TimeTrackTable(TimeTrackService service, LocalDate shownDate, boolean hideCreateButton) {
+        this.showCreateButton = hideCreateButton;
         add(createHeadline(service, shownDate));
 
         grid = createGrid(service, shownDate);
@@ -54,10 +60,11 @@ public class TimeTrackTable extends VerticalLayout {
     }
 
     private HorizontalLayout createHeadline(TimeTrackService service, LocalDate shownDate) {
-        HorizontalLayout headline = new HorizontalLayout(
-                new H2(shownDate.format(DateTimeFormatter.ISO_LOCAL_DATE)),
-                createCreationButton(service, shownDate),
-                hoursWorkedLabel);
+        HorizontalLayout headline = new HorizontalLayout();
+        headline.add(new H2(shownDate.format(DateTimeFormatter.ISO_LOCAL_DATE)));
+        if (showCreateButton)
+            headline.add(createCreationButton(service, shownDate));
+        headline.add(hoursWorkedLabel);
         headline.setAlignItems(Alignment.CENTER);
         headline.setJustifyContentMode(JustifyContentMode.BETWEEN);
         headline.setWidthFull();
@@ -171,6 +178,10 @@ public class TimeTrackTable extends VerticalLayout {
     public void refreshGrid() {
         grid.select(null);
         grid.getDataProvider().refreshAll();
+    }
+
+    public boolean isEditorOpen() {
+        return grid.getEditor().isOpen();
     }
 
     @VisibleForTesting
