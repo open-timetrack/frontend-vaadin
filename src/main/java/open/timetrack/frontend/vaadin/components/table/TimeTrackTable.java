@@ -50,6 +50,7 @@ public class TimeTrackTable extends VerticalLayout {
         add(grid);
 
         refreshHoursWorkedLabelText();
+
     }
 
     private HorizontalLayout createHeadline(TimeTrackService service, LocalDate shownDate) {
@@ -110,8 +111,6 @@ public class TimeTrackTable extends VerticalLayout {
 
         TimePicker startTime = new TimePicker();
         startTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
-        startTime.setMin(LocalTime.of(8, 0));
-        startTime.setMax(LocalTime.of(20, 0));
         startTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         startTime.setWidthFull();
         binder.forField(startTime).bind("startTime");
@@ -119,8 +118,6 @@ public class TimeTrackTable extends VerticalLayout {
 
         TimePicker endTime = new TimePicker();
         endTime.setStep(Duration.ofMinutes(MINUTE_STEPS));
-        endTime.setMin(LocalTime.of(8, 0));
-        endTime.setMax(LocalTime.of(20, 0));
         endTime.setLocale(VaadinService.getCurrentRequest().getLocale());
         endTime.setWidthFull();
         binder.forField(endTime).bind("endTime");
