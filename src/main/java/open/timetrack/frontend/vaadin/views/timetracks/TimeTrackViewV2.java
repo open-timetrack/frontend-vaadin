@@ -26,7 +26,7 @@ import java.util.Optional;
 @PageTitle("TimeTrackV2")
 @Route(value = "timeTrack/v2/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "v2", layout = MainLayout.class)
-//@JsModule("./js/copytoclipboard.js")
+@JsModule("./js/copytoclipboard.js")
 public class TimeTrackViewV2 extends Scroller {
     private final TimeTrackService timeTrackService;
     private final VerticalLayout content;
