@@ -3,6 +3,7 @@ package open.timetrack.frontend.vaadin.components.table;
 import com.helger.commons.annotation.VisibleForTesting;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Focusable;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -18,7 +19,6 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.selection.SelectionListener;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
@@ -28,17 +28,19 @@ import org.springframework.data.domain.PageRequest;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Optional;
 import java.util.Set;
 
 public class TimeTrackTable extends VerticalLayout {
     private static final int MINUTE_STEPS = 15;
-    public static final String HOURS_WORKED_TEXT = "Hours worked this day: %.2f";
+    public static final String HOURS_WORKED_TITLE_ATTRIBUTE = "hours worked this day: %.2f";
+    public static final String HOURS_WORKED_TEXT = "hwtd: %.2f";
     private final Span hoursWorkedLabel = new Span();
     private final Grid<TimeTrack> grid;
 
+    private final LocalDate shownDate;
     private final boolean showCreateButton;
 
     public TimeTrackTable(TimeTrackService service, LocalDate shownDate) {
@@ -46,22 +48,23 @@ public class TimeTrackTable extends VerticalLayout {
     }
 
     public TimeTrackTable(TimeTrackService service, LocalDate shownDate, boolean hideCreateButton) {
+        this.shownDate = shownDate;
         this.showCreateButton = hideCreateButton;
         add(createHeadline(service, shownDate));
 
         grid = createGrid(service, shownDate);
         Editor<TimeTrack> editor = createInGridEditor(grid);
-        createGridEvents(grid);
+        createGridEvents(grid, service);
         createInGridEditorEvents(editor, service);
         add(grid);
 
-        refreshHoursWorkedLabelText();
+        refreshHoursWorkedLabelText(service);
 
     }
 
     private HorizontalLayout createHeadline(TimeTrackService service, LocalDate shownDate) {
         HorizontalLayout headline = new HorizontalLayout();
-        headline.add(new H2(shownDate.format(DateTimeFormatter.ISO_LOCAL_DATE)));
+        headline.add(new H2(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(shownDate)));
         if (showCreateButton)
             headline.add(createCreationButton(service, shownDate));
         headline.add(hoursWorkedLabel);
@@ -74,10 +77,15 @@ public class TimeTrackTable extends VerticalLayout {
     private Grid<TimeTrack> createGrid(TimeTrackService service, LocalDate shownDate) {
         Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
 
-        grid.addColumn("startTime").setWidth("130px").setFlexGrow(0);
-        grid.addColumn("endTime").setWidth("130px").setFlexGrow(0);
-        grid.addColumn(timeTrack -> Math.round(timeTrack.getHoursTaken() * 10) / 10f).setWidth("60px").setFlexGrow(0).setHeader("#");
+        grid.addColumn("startTime").setWidth("130px").setFlexGrow(0).setHeader("Start");
+        grid.addColumn("endTime").setWidth("130px").setFlexGrow(0).setHeader("End");
+        grid.addColumn(timeTrack -> Math.round(timeTrack.getHoursTaken() * 100) / 100f).setWidth("70px").setFlexGrow(0).setHeader("#");
         grid.addColumn("task").setWidth("400px");
+        grid.addComponentColumn(timeTrack -> {
+            Button copyToClipboard = new Button("", VaadinIcon.COPY.create());
+            copyToClipboard.addClickListener(e -> UI.getCurrent().getPage().executeJs("window.copyToClipboard($0)", timeTrack.getTask()));
+            return copyToClipboard;
+        }).setWidth("74px").setFlexGrow(0);
         grid.addColumn("note").setWidth("400px");
         grid.setSortableColumns();
 
@@ -91,7 +99,7 @@ public class TimeTrackTable extends VerticalLayout {
         return grid;
     }
 
-    private void createGridEvents(Grid<TimeTrack> grid) {
+    private void createGridEvents(Grid<TimeTrack> grid, TimeTrackService service) {
         grid.addItemDoubleClickListener(e -> {
             grid.getEditor().editItem(e.getItem());
             Component editorComponent = e.getColumn().getEditorComponent();
@@ -107,7 +115,7 @@ public class TimeTrackTable extends VerticalLayout {
             }
         });
 
-        grid.getDataProvider().addDataProviderListener(event -> refreshHoursWorkedLabelText());
+        grid.getDataProvider().addDataProviderListener(event -> refreshHoursWorkedLabelText(service));
     }
 
     private Editor<TimeTrack> createInGridEditor(Grid<TimeTrack> grid) {
@@ -144,11 +152,13 @@ public class TimeTrackTable extends VerticalLayout {
 
     private void createInGridEditorEvents(Editor<TimeTrack> editor, TimeTrackService service) {
         editor.addSaveListener(event -> Optional.ofNullable(event).map(EditorEvent::getItem).ifPresent(service::update));
-        editor.addSaveListener(event -> refreshHoursWorkedLabelText());
+        editor.addSaveListener(event -> refreshHoursWorkedLabelText(service));
     }
 
-    private void refreshHoursWorkedLabelText() {
-        hoursWorkedLabel.setText(HOURS_WORKED_TEXT.formatted(TimeTrackService.getSumHoursWorked(grid.getDataProvider().fetch(new Query<>()))));
+    private void refreshHoursWorkedLabelText(TimeTrackService service) {
+        Float sumHoursWorked = service.getSumHoursWorked(shownDate);
+        hoursWorkedLabel.getElement().setAttribute("title", HOURS_WORKED_TITLE_ATTRIBUTE.formatted(sumHoursWorked));
+        hoursWorkedLabel.setText(HOURS_WORKED_TEXT.formatted(sumHoursWorked));
     }
 
     private Button createCreationButton(TimeTrackService service, LocalDate shownDate) {

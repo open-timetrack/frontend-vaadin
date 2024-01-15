@@ -4,6 +4,7 @@ import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -25,6 +26,7 @@ import java.util.Optional;
 @PageTitle("TimeTrackV2")
 @Route(value = "timeTrack/v2/:timeTrackID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "v2", layout = MainLayout.class)
+//@JsModule("./js/copytoclipboard.js")
 public class TimeTrackViewV2 extends Scroller {
     private final TimeTrackService timeTrackService;
     private final VerticalLayout content;
@@ -47,8 +49,7 @@ public class TimeTrackViewV2 extends Scroller {
                     if(el.scrollTop + el.clientHeight == el.scrollHeight) {
                         el.$server.addTimeTrackTableForNextDate();
                     }
-                });
-                        """);
+                });""");
 
         UI.getCurrent().addShortcutListener(this::deleteSelectedTimeTracks, Key.KEY_D, KeyModifier.ALT);
         UI.getCurrent().addShortcutListener(this::addTimeTrackOnToday, Key.KEY_N, KeyModifier.ALT);

@@ -47,7 +47,7 @@ public class TimeTrackViewV1 extends Div implements BeforeEnterObserver, TimeTra
 
     public static final int MINUTE_STEPS = 15;
     private final String TIMETRACK_ID = "timeTrackID";
-    private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timeTrack/%s/edit";
+    private final String TIMETRACK_EDIT_ROUTE_TEMPLATE = "timeTrack/v1/%s/edit";
 
     private final Grid<TimeTrack> grid = new Grid<>(TimeTrack.class, false);
     private final Span hoursWorkedText;

@@ -1,5 +1,6 @@
 package open.timetrack.frontend.vaadin.data.service;
 
+import jakarta.transaction.Transactional;
 import open.timetrack.frontend.vaadin.data.entity.TimeTrack;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ public class TimeTrackService {
         return repository.findById(id);
     }
 
+    @Transactional
     public TimeTrack update(TimeTrack entity) {
         return repository.save(entity);
     }
