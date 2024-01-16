@@ -1,6 +1,4 @@
 window.copyToClipboard = (str) => {
-
-
   const textarea = document.createElement("textarea");
   textarea.value = str;
   textarea.style.position = "absolute";
