@@ -25,6 +25,7 @@ import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import open.timetrack.frontend.vaadin.data.entity.TimeTrack;
 import open.timetrack.frontend.vaadin.data.service.TimeTrackService;
 import org.springframework.data.domain.PageRequest;
+import org.vaadin.olli.ClipboardHelper;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -81,11 +82,7 @@ public class TimeTrackTable extends VerticalLayout {
         grid.addColumn("endTime").setWidth("130px").setFlexGrow(0).setHeader("End");
         grid.addColumn(timeTrack -> Math.round(timeTrack.getHoursTaken() * 100) / 100f).setWidth("70px").setFlexGrow(0).setHeader("#");
         grid.addColumn("task").setWidth("400px");
-        grid.addComponentColumn(timeTrack -> {
-            Button copyToClipboard = new Button("", VaadinIcon.COPY.create());
-            copyToClipboard.addClickListener(e -> UI.getCurrent().getPage().executeJs("window.copyToClipboard($0)", timeTrack.getTask()));
-            return copyToClipboard;
-        }).setWidth("74px").setFlexGrow(0);
+        grid.addComponentColumn(timeTrack -> new ClipboardHelper(timeTrack.getTask(), new Button("", VaadinIcon.COPY.create()))).setWidth("74px").setFlexGrow(0);
         grid.addColumn("note").setWidth("400px");
         grid.setSortableColumns();
 
