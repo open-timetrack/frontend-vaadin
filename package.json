@@ -94,8 +94,7 @@
     "vite-plugin-checker": "0.6.1",
     "workbox-build": "7.0.0",
     "workbox-core": "7.0.0",
-    "workbox-precaching": "7.0.0",
-    "@vitejs/plugin-react-swc": "3.5.0"
+    "workbox-precaching": "7.0.0"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -269,8 +268,7 @@
       "vite-plugin-checker": "0.6.1",
       "workbox-build": "7.0.0",
       "workbox-core": "7.0.0",
-      "workbox-precaching": "7.0.0",
-      "@vitejs/plugin-react-swc": "3.5.0"
+      "workbox-precaching": "7.0.0"
     },
     "hash": "506665020eba7ee65f23b9b23e4d531abf7f7b006d848a0e7718e4ba55aac234"
   }
