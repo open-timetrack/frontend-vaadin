@@ -90,11 +90,12 @@
     "strip-css-comments": "5.0.0",
     "transform-ast": "2.4.4",
     "typescript": "5.1.6",
-    "vite": "4.5.2",
+    "vite": "4.5.1",
     "vite-plugin-checker": "0.6.1",
     "workbox-build": "7.0.0",
     "workbox-core": "7.0.0",
-    "workbox-precaching": "7.0.0"
+    "workbox-precaching": "7.0.0",
+    "@vitejs/plugin-react-swc": "3.5.0"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -170,9 +171,9 @@
     "proj4": "$proj4",
     "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
     "date-fns": "$date-fns",
-    "@vaadin-component-factory/vcf-nav": "$@vaadin-component-factory/vcf-nav",
     "@vaadin/a11y-base": "$@vaadin/a11y-base",
-    "@vaadin/side-nav": "$@vaadin/side-nav"
+    "@vaadin/side-nav": "$@vaadin/side-nav",
+    "@vaadin-component-factory/vcf-nav": "$@vaadin-component-factory/vcf-nav"
   },
   "vaadin": {
     "dependencies": {
@@ -264,11 +265,12 @@
       "strip-css-comments": "5.0.0",
       "transform-ast": "2.4.4",
       "typescript": "5.1.6",
-      "vite": "4.5.2",
+      "vite": "4.5.1",
       "vite-plugin-checker": "0.6.1",
       "workbox-build": "7.0.0",
       "workbox-core": "7.0.0",
-      "workbox-precaching": "7.0.0"
+      "workbox-precaching": "7.0.0",
+      "@vitejs/plugin-react-swc": "3.5.0"
     },
     "hash": "506665020eba7ee65f23b9b23e4d531abf7f7b006d848a0e7718e4ba55aac234"
   }
