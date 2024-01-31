@@ -8,11 +8,13 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.sidenav.SideNav;
+import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import open.timetrack.frontend.vaadin.components.appnav.AppNav;
-import open.timetrack.frontend.vaadin.components.appnav.AppNavItem;
-import open.timetrack.frontend.vaadin.views.timetracks.TimetracksView;
+import open.timetrack.frontend.vaadin.views.timetracks.TimeTrackViewV1;
+import open.timetrack.frontend.vaadin.views.timetracks.TimeTrackViewV2;
+import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -48,12 +50,11 @@ public class MainLayout extends AppLayout {
         addToDrawer(header, scroller, createFooter());
     }
 
-    private AppNav createNavigation() {
-        // AppNav is not yet an official component.
-        // For documentation, visit https://github.com/vaadin/vcf-nav#readme
-        AppNav nav = new AppNav();
+    private SideNav createNavigation() {
+        SideNav nav = new SideNav();
 
-        nav.addItem(new AppNavItem("Timetracks", TimetracksView.class, "la la-clock"));
+        nav.addItem(new SideNavItem("Timetracks", TimeTrackViewV1.class, LineAwesomeIcon.CLOCK.create()));
+        nav.addItem(new SideNavItem("TimetracksV2", TimeTrackViewV2.class, LineAwesomeIcon.CLOCK.create()));
 
         return nav;
     }

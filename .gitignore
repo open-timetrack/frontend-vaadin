@@ -18,3 +18,5 @@ tsconfig.json
 types.d.ts
 vite.config.ts
 vite.generated.ts
+/db/
+/src/main/bundles/
